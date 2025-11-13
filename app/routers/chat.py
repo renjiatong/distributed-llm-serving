@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from app.schemas.chat import ChatRequest, ChatResponse
-from app.services.chat_service import generate_reply
+from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
+from app.schemas.chat import ChatRequest
+from app.services.chat_service import stream_reply
 
 router = APIRouter()
 
-@router.post("/chat", response_model=ChatResponse)
-def chat(req: ChatRequest):
-    reply = generate_reply(req.message)
-    return ChatResponse(reply=reply)
+@router.get("/chat/stream")
+def chat_stream(message: str):
+    return StreamingResponse(stream_reply(message), media_type="text/event-stream")

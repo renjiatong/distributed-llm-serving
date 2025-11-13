@@ -48,25 +48,37 @@
 
 <script>
   async function sendMessage() {
-    const message = document.getElementById("message").value;
-    if (!message) return;
+  const message = document.getElementById("message").value;
+  if (!message) return;
 
-    // 显示用户消息
-    addMessage("user", message);
+  addMessage("user", message);
+  document.getElementById("message").value = "";
 
-    document.getElementById("message").value = "";
+  const eventSource = new EventSource(`http://127.0.0.1:8000/chat/stream?message=${encodeURIComponent(message)}`);
 
-    // 调用你的后端 API
-    const response = await fetch("http://127.0.0.1:8000/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: message })
-    });
+  let assistantText = "";
+  addMessage("assistant", "");
 
-    const data = await response.json();
+  eventSource.onmessage = function(event) {
+    if (event.data === "[DONE]") {
+      eventSource.close();
+      return;
+    }
 
-    addMessage("assistant", data.reply);
+    assistantText += event.data;
+
+    // 更新最后一条 assistant 消息
+    updateLastAssistantMessage(assistantText);
+  };
+}
+
+function updateLastAssistantMessage(text) {
+  const chatBox = document.getElementById("chat-box");
+  const messages = chatBox.getElementsByClassName("assistant");
+  if (messages.length > 0) {
+    messages[messages.length - 1].textContent = "AI: " + text;
   }
+}
 
   function addMessage(role, text) {
     const chatBox = document.getElementById("chat-box");

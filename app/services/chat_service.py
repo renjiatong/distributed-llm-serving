@@ -1,12 +1,17 @@
-import os
 from openai import OpenAI
+import os
 
-# 用 OPENAI_API_KEY 环境变量
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def generate_reply(user_message: str) -> str:
-    response = client.chat.completions.create(
+def stream_reply(user_message: str):
+    stream = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "user", "content": user_message}]
+        messages=[{"role": "user", "content": user_message}],
+        stream=True
     )
-    return response.choices[0].message.content
+
+    for chunk in stream:
+        if chunk.choices and chunk.choices[0].delta.content:
+            yield f"data: {chunk.choices[0].delta.content}\n\n"
+
+    yield "data: [DONE]\n\n"
