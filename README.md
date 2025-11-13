@@ -1,5 +1,3 @@
-# distributed-llm-serving
-
 # 🚀 LLM Serving Backend (FastAPI + OpenAI + SSE + Prometheus + Grafana)
 
 A modular, production-grade backend designed to serve LLM chat responses with
@@ -19,7 +17,7 @@ Currently, it implements:
 
 ---
 
-## ✨ Features Completed (Day 1–12)
+## ✨ Features Completed
 
 ### ✅ **1. FastAPI Backend**
 - Project structured using `routers/`, `services/`, `schemas/`, `utils/`
@@ -75,27 +73,6 @@ A minimal HTML/JS frontend for testing:
 - Trace ID displayed with assistant replies
 
 This UI allows quick testing without Postman/CLI.
-
----
-
-## 🧰 Project Structure
-
-llm-serving/
-└── app/
-├── main.py
-├── routers/
-│ └── chat.py
-├── schemas/
-│ └── chat.py
-├── services/
-│ └── chat_service.py
-├── utils/
-│ ├── logger.py
-│ └── metrics.py
-├── chat.html
-├── prometheus.yml
-├── docker-compose.yml
-
 
 ---
 
