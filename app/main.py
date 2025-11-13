@@ -1,5 +1,6 @@
 import time
 import logging
+import uuid
 from fastapi import FastAPI, Request
 from app.routers.chat import router as chat_router
 
