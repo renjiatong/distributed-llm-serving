@@ -22,6 +22,7 @@ async def log_requests(request: Request, call_next):
     logger.info(f"[{request_id}] {request.method} {request.url.path} took {process_time:.2f}ms")
 
     response.headers["X-Request-ID"] = request_id
+    response.headers["X-Process-Time-ms"] = f"{process_time:.2f}"
 
     return response
 
