@@ -7,6 +7,8 @@ from app.routers.chat import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.utils.metrics import REQUEST_COUNT, REQUEST_LATENCY
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from app.utils.rate_limiter import TokenBucket
+from fastapi import HTTPException
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -41,6 +43,17 @@ async def request_middleware(request: Request, call_next):
     response.headers["X-Trace-ID"] = trace_id
     return response
 
+# 每秒允许最多 5 个请求，桶最大容量 10
+rate_limiter = TokenBucket(rate=5, capacity=10)
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    if not rate_limiter.allow():
+        raise HTTPException(status_code=429, detail="Too Many Requests")
+
+    return await call_next(request)
+
+
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
     method = request.method
@@ -52,6 +65,7 @@ async def metrics_middleware(request: Request, call_next):
         response = await call_next(request)
 
     return response
+
 
 @app.get("/health")
 def health_check():
