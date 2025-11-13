@@ -1,14 +1,10 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, HTTPException
+from app.schemas.chat import ChatRequest, ChatResponse
+from app.services.chat_service import generate_reply
 
 router = APIRouter()
 
-class ChatRequest(BaseModel):
-    message: str
-
-class ChatResponse(BaseModel):
-    reply: str
-
 @router.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest):
-    return ChatResponse(reply=f"You said: {req.message}")
+    reply = generate_reply(req.message)
+    return ChatResponse(reply=reply)

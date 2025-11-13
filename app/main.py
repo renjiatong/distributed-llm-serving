@@ -1,7 +1,8 @@
-import time
-import logging
-import uuid
 from fastapi import FastAPI, Request
+import time
+import uuid
+import logging
+from app.utils.logger import logger
 from app.routers.chat import router as chat_router
 
 logging.basicConfig(level=logging.INFO)
