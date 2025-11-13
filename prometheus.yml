@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 1s  # 抓取频率（很高，方便测试）
+
+scrape_configs:
+  - job_name: "llm-backend"
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["host.docker.internal:8000"]
