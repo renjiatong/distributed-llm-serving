@@ -23,6 +23,12 @@
     .assistant {
       color: green;
       margin: 5px 0;
+      white-space: pre-wrap; /* 保留换行 */
+    }
+    .trace {
+      font-size: 12px;
+      color: #999;
+      margin-top: 3px;
     }
     #input-area {
       display: flex;
@@ -48,37 +54,53 @@
 
 <script>
   async function sendMessage() {
-  const message = document.getElementById("message").value;
-  if (!message) return;
+    const message = document.getElementById("message").value;
+    if (!message) return;
 
-  addMessage("user", message);
-  document.getElementById("message").value = "";
+    addMessage("user", message);
+    document.getElementById("message").value = "";
 
-  const eventSource = new EventSource(`http://127.0.0.1:8000/chat/stream?message=${encodeURIComponent(message)}`);
+    // 打开 SSE 连接
+    const eventSource = new EventSource(
+      `http://127.0.0.1:8000/chat/stream?message=${encodeURIComponent(message)}`
+    );
 
-  let assistantText = "";
-  addMessage("assistant", "");
+    let assistantText = "";
+    let traceId = null;
 
-  eventSource.onmessage = function(event) {
-    if (event.data === "[DONE]") {
-      eventSource.close();
-      return;
-    }
+    // 先创建一个空的 assistant 消息
+    addMessage("assistant", "");
 
-    assistantText += event.data;
+    eventSource.onmessage = function (event) {
+      if (event.data === "[DONE]") {
+        eventSource.close();
+        updateLastAssistantMessage(assistantText, traceId);
+        return;
+      }
 
-    // 更新最后一条 assistant 消息
-    updateLastAssistantMessage(assistantText);
-  };
-}
+      // SSE 自定义格式：TRACE:xxxx / 内容
+      if (event.data.startsWith("TRACE:")) {
+        traceId = event.data.replace("TRACE:", "");
+        return;
+      }
 
-function updateLastAssistantMessage(text) {
-  const chatBox = document.getElementById("chat-box");
-  const messages = chatBox.getElementsByClassName("assistant");
-  if (messages.length > 0) {
-    messages[messages.length - 1].textContent = "AI: " + text;
+      assistantText += event.data;
+      updateLastAssistantMessage(assistantText, traceId);
+    };
   }
-}
+
+  function updateLastAssistantMessage(text, traceId) {
+    const chatBox = document.getElementById("chat-box");
+    const messages = chatBox.getElementsByClassName("assistant");
+
+    if (messages.length > 0) {
+      let content = "AI: " + text;
+      if (traceId) {
+        content += `\n\n(trace: ${traceId})`;
+      }
+      messages[messages.length - 1].textContent = content;
+    }
+  }
 
   function addMessage(role, text) {
     const chatBox = document.getElementById("chat-box");
