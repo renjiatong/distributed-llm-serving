@@ -21,21 +21,25 @@ app.add_middleware(
 )
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
+async def request_middleware(request: Request, call_next):
     trace_id = uuid.uuid4().hex[:8]
     request.state.trace_id = trace_id
 
     start = time.time()
-
     response = await call_next(request)
+    duration = (time.time() - start) * 1000
 
-    process_time = (time.time() - start) * 1000
-    logger.info(f"[{trace_id}] {request.method} {request.url.path} took {process_time:.2f}ms")
+    logger.info({
+        "trace_id": trace_id,
+        "method": request.method,
+        "path": request.url.path,
+        "duration_ms": round(duration, 2),
+        "message": "request completed"
+    })
 
     response.headers["X-Trace-ID"] = trace_id
-    response.headers["X-Process-Time-ms"] = f"{process_time:.2f}"
-
     return response
+
 
 
 @app.get("/health")
