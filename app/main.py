@@ -1,11 +1,12 @@
 import time
 import uuid
 import logging
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from app.utils.logger import logger
 from app.routers.chat import router as chat_router
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.utils.metrics import REQUEST_COUNT, REQUEST_LATENCY
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,10 +41,25 @@ async def request_middleware(request: Request, call_next):
     response.headers["X-Trace-ID"] = trace_id
     return response
 
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    method = request.method
+    path = request.url.path
 
+    REQUEST_COUNT.labels(method=method, path=path).inc()
+
+    with REQUEST_LATENCY.labels(method=method, path=path).time():
+        response = await call_next(request)
+
+    return response
 
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
 app.include_router(chat_router)
+
+@app.get("/metrics")
+def metrics():
+    data = generate_latest()
+    return Response(content=data, media_type=CONTENT_TYPE_LATEST)
